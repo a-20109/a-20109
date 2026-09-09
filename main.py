@@ -10,7 +10,8 @@ st.set_page_config(page_title="어제의 박스오피스", page_icon="🍿")
 # 한 번 불러온 데이터를 1시간(3600초) 동안 캐싱하여 불필요한 API 재호출 방지
 @st.cache_data(ttl=3600)
 def fetch_box_office(target_date, api_key):
-    url = "https://www.kobis.or.kr/kobisopenapi/webservice/rest/boxoffice/searchDailyBoxOfficeList.json"
+    # 스트림릿 클라우드에서 SSLError 방지를 위해 https 대신 http 사용
+    url = "http://www.kobis.or.kr/kobisopenapi/webservice/rest/boxoffice/searchDailyBoxOfficeList.json"
     params = {
         "key": api_key,
         "targetDt": target_date
