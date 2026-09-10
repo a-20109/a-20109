@@ -1,5 +1,6 @@
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 import streamlit as st
 
 # 페이지 기본 설정
@@ -52,20 +53,17 @@ filtered_df = df[df["영화명"] == selected_movie]
 st.write("---")
 st.subheader("📈 1. 선택한 영화의 일별 관객수 추이")
 
-# Plotly를 이용한 일별 관객수 변화 선 그래프 작성
 fig_line = px.line(
     filtered_df,
     x="기준일자",
     y="해당일관객수",
     title=f"[{selected_movie}] 일별 관객수 변화",
     labels={"기준일자": "날짜", "해당일관객수": "관객수 (명)"},
-    markers=True,  # 데이터 지점에 점 표시
+    markers=True,
 )
 
-# 그래프 화면에 출력 (너비에 맞춤)
 st.plotly_chart(fig_line, use_container_width=True)
 
-# 첫 번째 그래프 설명 문구
 st.info(
     "💡 **이 그래프로 알 수 있는 것:** 개봉 초반 관객수 집중도와 주말/평일 간의 관객수 변동 패턴을 파악할 수 있습니다."
 )
@@ -75,7 +73,6 @@ st.info(
 st.write("---")
 st.subheader("🌊 2. 선택한 영화의 누적 관객수 추이")
 
-# Plotly를 이용한 기준일자별 누적관객수 영역 차트 작성
 fig_area = px.area(
     filtered_df,
     x="기준일자",
@@ -84,31 +81,21 @@ fig_area = px.area(
     labels={"기준일자": "날짜", "누적관객수": "누적 관객수 (명)"},
 )
 
-# 그래프 화면에 출력
 st.plotly_chart(fig_area, use_container_width=True)
 
-# 두 번째 그래프 설명 문구
 st.info(
     "💡 **이 그래프로 알 수 있는 것:** 시간이 지남에 따라 총 관객수가 누적되는 상승 곡선과 주요 흥행 구간(급격히 증가하는 시기)을 직관적으로 확인할 수 있습니다."
 )
 
 
-# [6. 세 번째 그래프 - 장기 흥행 TOP 5 영화 누적 관객수 비교 (수정됨)]
+# [6. 세 번째 그래프 - 장기 흥행 TOP 5 영화 누적 관객수 비교]
 st.write("---")
 st.subheader("🏆 3. 장기 흥행(20일 이상 상위권) TOP 5 영화 누적 관객수 비교")
 
-# 1) '순위' 컬럼이 존재할 경우 순위 10위 이내 데이터 필터링 (컬럼이 없으면 전체 데이터 활용)
 top10_df = df[df["순위"] <= 10] if "순위" in df.columns else df
-
-# 2) 영화별 TOP 10 진입 일수(중복 없는 기준일자 수) 계산
 movie_appearance_days = top10_df.groupby("영화명")["기준일자"].nunique()
+movies_over_20days = movie_appearance_days[movie_appearance_days >= 20].index
 
-# 3) TOP 10에 20일 이상 등장한 영화의 목록만 추출 (20일 미만 제외)
-movies_over_20days = movie_appearance_days[
-    movie_appearance_days >= 20
-].index
-
-# 4) 조건(20일 이상)을 충족하는 영화 중 최고 누적관객수 기준 상위 5개 영화 선정
 top5_longterm_movies = (
     df[df["영화명"].isin(movies_over_20days)]
     .groupby("영화명")["누적관객수"]
@@ -118,10 +105,8 @@ top5_longterm_movies = (
     .index.tolist()
 )
 
-# 5) 선정된 상위 5개 영화의 시계열 데이터만 추출
 top5_longterm_df = df[df["영화명"].isin(top5_longterm_movies)]
 
-# 6) Plotly 다중 선 그래프 작성 (color="영화명" 설정을 통해 영화별 자동 색상 구분 및 범례 표시)
 fig_top5 = px.line(
     top5_longterm_df,
     x="기준일자",
@@ -135,16 +120,68 @@ fig_top5 = px.line(
     },
 )
 
-# 그래프 화면에 출력
 st.plotly_chart(fig_top5, use_container_width=True)
 
-# 세 번째 그래프 설명 문구
 st.info(
     "💡 **이 그래프로 알 수 있는 것:** 단기 반짝 흥행을 제외하고, 박스오피스 상위권(TOP 10)에 20일 이상 꾸준히 머무른 롱런 영화들 중 최고 흥행작 5개 편의 누적관객 성장 속도 및 차이를 파악할 수 있습니다."
 )
 
 
-# [7. 구역 나누기 - 향후 그래프 추가용 구역]
+# [7. 네 번째 그래프 - 전체 박스오피스 관객수 7일 이동평균선]
 st.write("---")
-st.subheader("📊 4. 추가 분석 (예정)")
+st.subheader("📉 4. 전체 박스오피스 일별 관객수 및 7일 이동평균 추이")
+
+# 1) 기준일자별 TOP 10 영화의 해당일관객수 전체 합계 구하기
+top10_daily = df[df["순위"] <= 10] if "순위" in df.columns else df
+daily_total = top10_daily.groupby("기준일자")["해당일관객수"].sum().reset_index()
+
+# 2) 7일 이동평균(Rolling Mean) 계산
+daily_total["7일_이동평균"] = (
+    daily_total["해당일관객수"].rolling(window=7, min_periods=1).mean()
+)
+
+# 3) Plotly graph_objects로 원본 선과 이동평균 선을 겹쳐서 작성
+fig_ma = go.Figure()
+
+# 원본 일별 관객수 선 (연하고 얇은 선)
+fig_ma.add_trace(
+    go.Scatter(
+        x=daily_total["기준일자"],
+        y=daily_total["해당일관객수"],
+        mode="lines",
+        name="일별 관객수 (합계)",
+        line=dict(color="rgba(180, 180, 180, 0.5)", width=1.5),
+    )
+)
+
+# 7일 이동평균 선 (진하고 두꺼운 선)
+fig_ma.add_trace(
+    go.Scatter(
+        x=daily_total["기준일자"],
+        y=daily_total["7일_이동평균"],
+        mode="lines",
+        name="7일 이동평균",
+        line=dict(color="#1f77b4", width=3),
+    )
+)
+
+# 그래프 레이아웃 설정
+fig_ma.update_layout(
+    title="전체 박스오피스 일별 관객수 합계 및 7일 이동평균선",
+    xaxis_title="날짜",
+    yaxis_title="총 관객수 (명)",
+    hovermode="x unified",
+)
+
+st.plotly_chart(fig_ma, use_container_width=True)
+
+# 네 번째 그래프 설명 문구
+st.info(
+    "💡 **이 그래프로 알 수 있는 것:** 주말과 평일 사이의 일별 관객수 급변에 따른 착시를 줄이고, 전체 영화 시장의 전반적인 흥행 흐름과 성수기·비수기 트렌드를 부드러운 곡선으로 파악할 수 있습니다."
+)
+
+
+# [8. 구역 나누기 - 향후 그래프 추가용 구역]
+st.write("---")
+st.subheader("📊 5. 추가 분석 (예정)")
 st.write("📌 *이 구역에는 추후 새로운 분석 그래프가 추가될 예정입니다.*")
