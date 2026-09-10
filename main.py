@@ -131,16 +131,16 @@ st.info(
 st.write("---")
 st.subheader("📉 4. 전체 박스오피스 일별 관객수 및 7일 이동평균 추이")
 
-# 1) 기준일자별 TOP 10 영화의 해당일관객수 전체 합계 구하기
+# 기준일자별 TOP 10 영화의 해당일관객수 전체 합계 구하기
 top10_daily = df[df["순위"] <= 10] if "순위" in df.columns else df
 daily_total = top10_daily.groupby("기준일자")["해당일관객수"].sum().reset_index()
 
-# 2) 7일 이동평균(Rolling Mean) 계산
+# 7일 이동평균(Rolling Mean) 계산
 daily_total["7일_이동평균"] = (
     daily_total["해당일관객수"].rolling(window=7, min_periods=1).mean()
 )
 
-# 3) Plotly graph_objects로 원본 선과 이동평균 선을 겹쳐서 작성
+# Plotly graph_objects로 원본 선과 이동평균 선을 겹쳐서 작성
 fig_ma = go.Figure()
 
 # 원본 일별 관객수 선 (연하고 얇은 선)
@@ -165,7 +165,6 @@ fig_ma.add_trace(
     )
 )
 
-# 그래프 레이아웃 설정
 fig_ma.update_layout(
     title="전체 박스오피스 일별 관객수 합계 및 7일 이동평균선",
     xaxis_title="날짜",
@@ -175,13 +174,43 @@ fig_ma.update_layout(
 
 st.plotly_chart(fig_ma, use_container_width=True)
 
-# 네 번째 그래프 설명 문구
 st.info(
     "💡 **이 그래프로 알 수 있는 것:** 주말과 평일 사이의 일별 관객수 급변에 따른 착시를 줄이고, 전체 영화 시장의 전반적인 흥행 흐름과 성수기·비수기 트렌드를 부드러운 곡선으로 파악할 수 있습니다."
 )
 
 
-# [8. 구역 나누기 - 향후 그래프 추가용 구역]
+# [8. 다섯 번째 그래프 - 월별 전체 박스오피스 관객수 합계 막대그래프]
 st.write("---")
-st.subheader("📊 5. 추가 분석 (예정)")
+st.subheader("📊 5. 월별 전체 박스오피스 관객수 합계")
+
+# 1) 4번 그래프에서 구한 daily_total 데이터의 기준일자를 연-월(YYYY-MM) 문자열로 변환
+daily_total["연월"] = daily_total["기준일자"].dt.strftime("%Y-%m")
+
+# 2) 연-월 단위로 그룹화하여 월별 관객수 총합 계산
+monthly_total = daily_total.groupby("연월")["해당일관객수"].sum().reset_index()
+
+# 3) Plotly를 이용한 월별 막대그래프 작성
+fig_monthly = px.bar(
+    monthly_total,
+    x="연월",
+    y="해당일관객수",
+    title="월별 전체 박스오피스 총 관객수",
+    labels={"연월": "연-월", "해당일관객수": "총 관객수 (명)"},
+    text_auto=".2s",  # 막대 상단에 축약된 숫자 형식(예: 1.2M)으로 표현
+)
+
+# x축 레이아웃을 카테고리형으로 설정하여 월 순서가 꼬이지 않도록 지정
+fig_monthly.update_layout(xaxis_type="category")
+
+st.plotly_chart(fig_monthly, use_container_width=True)
+
+# 다섯 번째 그래프 설명 문구
+st.info(
+    "💡 **이 그래프로 알 수 있는 것:** 월별 총 관객수를 비교하여 연중 극장가의 최대 성수기(방학, 명절 연휴 등)와 상대적인 비수기 시즌을 명확히 확인할 수 있습니다."
+)
+
+
+# [9. 구역 나누기 - 향후 그래프 추가용 구역]
+st.write("---")
+st.subheader("📊 6. 추가 분석 (예정)")
 st.write("📌 *이 구역에는 추후 새로운 분석 그래프가 추가될 예정입니다.*")
