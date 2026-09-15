@@ -73,7 +73,6 @@ st.divider()
 # ==========================================
 st.subheader("3. 총 관객 수 분포 (히스토그램)")
 
-# 히스토그램 생성 (20개 구간으로 나눔)
 fig3 = px.histogram(
     df, 
     x='total_audi',
@@ -81,7 +80,6 @@ fig3 = px.histogram(
     labels={'total_audi': '총 관객 수 (명)'}
 )
 
-# 툴팁과 축 레이블 설정
 fig3.update_traces(hovertemplate='총 관객 수 구간: %{x}<br>영화 편수: %{y}편<extra></extra>')
 fig3.update_layout(yaxis_title="영화 편수 (편)")
 
@@ -91,15 +89,42 @@ st.plotly_chart(fig3, use_container_width=True)
 max_movie = df.loc[df['total_audi'].idxmax(), 'movieNm']
 max_audi = int(df['total_audi'].max())
 
-# 데이터를 20개 구간으로 나누어 가장 영화가 많은 구간 찾기
 bins = pd.cut(df['total_audi'], bins=20)
 most_common_interval = bins.value_counts().idxmax()
-min_val = max(0, int(most_common_interval.left)) # 구간 시작점 (음수 방지)
-max_val = int(most_common_interval.right)        # 구간 끝점
+min_val = max(0, int(most_common_interval.left)) 
+max_val = int(most_common_interval.right)        
 
-# 그래프 해석 구역 (계산된 결과 출력)
 st.info(f"**💡 이 그래프로 알 수 있는 것**\n\n"
         f"대부분의 영화가 **{min_val:,}명 ~ {max_val:,}명** 구간에 몰려 있으며, "
         f"가장 관객이 많은 영화는 **'{max_movie}'**({max_audi:,}명)입니다.")
+
+st.divider()
+
+# ==========================================
+# 7. 네 번째 그래프: 개봉일 스크린 수와 총 관객 수의 관계 (산점도)
+# ==========================================
+st.subheader("4. 개봉일 스크린 수와 총 관객 수의 관계 (산점도)")
+
+fig4 = px.scatter(
+    df,
+    x='first_scrn',
+    y='total_audi',
+    color='genre',         # 장르별로 점 색상 다르게 설정
+    hover_name='movieNm',  # 마우스 오버 시 영화명 표시
+    labels={
+        'first_scrn': '개봉일 스크린 수 (개)',
+        'total_audi': '총 관객 수 (명)',
+        'genre': '장르'
+    }
+)
+
+# 툴팁에 천 단위 콤마를 적용하여 보기 좋게 설정
+fig4.update_traces(
+    hovertemplate='<b>%{hovertext}</b><br>스크린 수: %{x:,.0f}개<br>총 관객 수: %{y:,.0f}명<extra></extra>'
+)
+
+st.plotly_chart(fig4, use_container_width=True)
+
+st.info("**💡 이 그래프로 알 수 있는 것**\n\n(이곳에 그래프를 보고 발견한 사실을 한 문장으로 적어주세요. 예: 개봉일 스크린 수가 많을수록 총 관객 수가 늘어나는 경향이 있는지 확인할 수 있습니다.)")
 
 st.divider()
