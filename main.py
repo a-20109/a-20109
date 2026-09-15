@@ -17,14 +17,14 @@ def load_data():
     # 장르 전처리: '|' 기호로 구분된 경우 첫 번째 장르만 추출
     df['genre'] = df['genre'].astype(str).str.split('|').str[0]
     
-    # 결측치 처리 (관객 수가 없는 경우 0으로 처리하여 트리맵 오류 방지)
+    # 결측치 처리
     df['total_audi'] = df['total_audi'].fillna(0)
     
     return df
 
 df = load_data()
 
-st.divider() # 구역 나누기 선
+st.divider() 
 
 # ==========================================
 # 4. 첫 번째 그래프: 장르별 영화 편수 (도넛 그래프)
@@ -53,22 +53,53 @@ st.divider()
 # ==========================================
 st.subheader("2. 장르별 총 관객 수와 흥행작 (트리맵)")
 
-# 플롯리 트리맵 생성
 fig2 = px.treemap(
     df,
-    path=['genre', 'movieNm'], # 계층 구조: 장르 -> 영화명
-    values='total_audi',       # 칸 크기 기준: 총 관객 수
+    path=['genre', 'movieNm'], 
+    values='total_audi',       
 )
 
-# 마우스를 올렸을 때 이름(영화명/장르명)과 총 관객 수가 보이도록 툴팁 설정 (천 단위 콤마 추가)
 fig2.update_traces(
     hovertemplate='<b>%{label}</b><br>총 관객: %{value:,.0f}명<extra></extra>'
 )
-
-# 그래프 출력
 st.plotly_chart(fig2, use_container_width=True)
 
-# 그래프 해석 구역
 st.info("**💡 이 그래프로 알 수 있는 것**\n\n(이곳에 그래프를 보고 발견한 사실을 한 문장으로 적어주세요.)")
+
+st.divider() 
+
+# ==========================================
+# 6. 세 번째 그래프: 총 관객 수 분포 (히스토그램)
+# ==========================================
+st.subheader("3. 총 관객 수 분포 (히스토그램)")
+
+# 히스토그램 생성 (20개 구간으로 나눔)
+fig3 = px.histogram(
+    df, 
+    x='total_audi',
+    nbins=20,
+    labels={'total_audi': '총 관객 수 (명)'}
+)
+
+# 툴팁과 축 레이블 설정
+fig3.update_traces(hovertemplate='총 관객 수 구간: %{x}<br>영화 편수: %{y}편<extra></extra>')
+fig3.update_layout(yaxis_title="영화 편수 (편)")
+
+st.plotly_chart(fig3, use_container_width=True)
+
+# 자동으로 인사이트 문구 계산하기
+max_movie = df.loc[df['total_audi'].idxmax(), 'movieNm']
+max_audi = int(df['total_audi'].max())
+
+# 데이터를 20개 구간으로 나누어 가장 영화가 많은 구간 찾기
+bins = pd.cut(df['total_audi'], bins=20)
+most_common_interval = bins.value_counts().idxmax()
+min_val = max(0, int(most_common_interval.left)) # 구간 시작점 (음수 방지)
+max_val = int(most_common_interval.right)        # 구간 끝점
+
+# 그래프 해석 구역 (계산된 결과 출력)
+st.info(f"**💡 이 그래프로 알 수 있는 것**\n\n"
+        f"대부분의 영화가 **{min_val:,}명 ~ {max_val:,}명** 구간에 몰려 있으며, "
+        f"가장 관객이 많은 영화는 **'{max_movie}'**({max_audi:,}명)입니다.")
 
 st.divider()
