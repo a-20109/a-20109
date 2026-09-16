@@ -87,6 +87,7 @@ fig3.update_layout(yaxis_title="영화 편수 (편)")
 
 st.plotly_chart(fig3, use_container_width=True)
 
+# 자동으로 인사이트 문구 계산하기
 max_movie = df.loc[df['total_audi'].idxmax(), 'movieNm']
 max_audi = int(df['total_audi'].max())
 
@@ -151,7 +152,7 @@ fig5 = px.box(
 
 st.plotly_chart(fig5, use_container_width=True)
 
-st.info("**💡 이 그래프로 알 수 수 있는 것**\n\n(이곳에 그래프를 보고 발견한 사실을 한 문장으로 적어주세요.)")
+st.info("**💡 이 그래프로 알 수 있는 것**\n\n(이곳에 그래프를 보고 발견한 사실을 한 문장으로 적어주세요.)")
 
 st.divider()
 
@@ -194,7 +195,7 @@ st.subheader("7. 제작 국가 및 장르 분포 (선버스트 그래프)")
 
 fig7 = px.sunburst(
     df,
-    path=['nation', 'genre'],
+    path=['nation', 'genre'], 
 )
 
 fig7.update_traces(
@@ -208,41 +209,38 @@ st.info("**💡 이 그래프로 알 수 있는 것**\n\n(이곳에 그래프를
 st.divider()
 
 # ==========================================
-# 11. 여덟 번째 그래프: 개봉일 및 장르별 타임라인 (산점도)
+# 11. 여덟 번째 그래프: 개봉 후 관객 수가 1000만을 처음 넘긴 영화
 # ==========================================
-st.subheader("8. 천만 관객 돌파 영화 찾기")
+st.subheader("8. 개봉 후 관객 수가 1000만을 처음 넘긴 영화")
 
-# 날짜 데이터를 보기 좋게(예: 2023-01-01) 변환
-df['openDt_date'] = pd.to_datetime(df['openDt'].astype(str), format='%Y%m%d', errors='coerce')
+# 1000만 관객 이상 영화 필터링
+df_10m = df[df['total_audi'] >= 10000000].copy()
 
-# 천만 영화 여부를 파생 변수로 생성
-df['is_10m'] = df['total_audi'] >= 10000000
-df['10m_label'] = df['is_10m'].map({True: '천만 관객 돌파 (1,000만 이상)', False: '일반 영화 (1,000만 미만)'})
+# 여덟 자리 숫자(예: 20190123)인 개봉일을 날짜 형식(datetime)으로 변환
+df_10m['openDt_date'] = pd.to_datetime(df_10m['openDt'].astype(str))
 
-# 가로축은 개봉일, 세로축은 장르로 설정하여 시간에 따른 흐름을 보여주는 산점도
+# 타임라인 형태의 산점도 그리기
 fig8 = px.scatter(
-    df,
+    df_10m,
     x='openDt_date',
     y='genre',
-    color='10m_label', # 천만 영화 여부에 따라 색상 다르게 지정
-    color_discrete_map={'천만 관객 돌파 (1,000만 이상)': '#FF4B4B', '일반 영화 (1,000만 미만)': '#A0A0A0'},
-    size='total_audi', # 점 크기도 총 관객 수에 비례하도록 설정
-    hover_name='movieNm',
-    title='개봉 후 관객 수가 1000만을 처음 넘긴 영화 장르', # 요청하신 그래프 제목
+    color='movieNm',      # 영화마다 다른 색상 적용
+    size='total_audi',    # 관객 수에 비례하여 점 크기 조절
+    size_max=30,
+    hover_name='movieNm', # 마우스 오버 시 영화명 표시
     labels={
         'openDt_date': '개봉일',
         'genre': '장르',
-        '10m_label': '천만 관객 여부'
+        'movieNm': '영화명'
     }
 )
 
-# 툴팁 설정
 fig8.update_traces(
-    hovertemplate='<b>%{hovertext}</b><br>개봉일: %{x}<br>장르: %{y}<br>총 관객 수: %{marker.size:,.0f}명<extra></extra>'
+    hovertemplate='<b>%{hovertext}</b><br>개봉일: %{x}<br>장르: %{y}<extra></extra>'
 )
 
 st.plotly_chart(fig8, use_container_width=True)
 
-st.info("**💡 이 그래프로 알 수 있는 것**\n\n(이곳에 그래프를 보고 발견한 사실을 한 문장으로 적어주세요. 예: 그래프의 가장 왼쪽(과거)부터 붉은색 큰 점을 따라가 보면 처음으로 1000만을 달성한 영화와 장르를 찾을 수 있습니다.)")
+st.info("**💡 이 그래프로 알 수 있는 것**\n\n(이곳에 그래프를 보고 발견한 사실을 한 문장으로 적어주세요. 예: 가장 왼쪽에 찍힌 점이 1000만 관객을 가장 먼저 돌파한 영화임을 알 수 있습니다.)")
 
 st.divider()
