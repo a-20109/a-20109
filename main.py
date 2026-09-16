@@ -219,30 +219,30 @@ df['openDt_date'] = pd.to_datetime(df['openDt'].astype(str), format='%Y%m%d', er
 df['is_10m'] = df['total_audi'] >= 10000000
 df['10m_label'] = df['is_10m'].map({True: '천만 관객 돌파 (1,000만 이상)', False: '일반 영화 (1,000만 미만)'})
 
-# 가로축은 장르, 세로축은 개봉일로 설정하여 시간에 따른 흐름을 보여주는 산점도
+# 가로축은 개봉일, 세로축은 장르로 설정하여 시간에 따른 흐름을 보여주는 산점도
 fig8 = px.scatter(
     df,
-    x='genre',           # 가로축: 장르
-    y='openDt_date',     # 세로축: 개봉일
-    color='10m_label', 
+    x='openDt_date',
+    y='genre',
+    color='10m_label', # 천만 영화 여부에 따라 색상 다르게 지정
     color_discrete_map={'천만 관객 돌파 (1,000만 이상)': '#FF4B4B', '일반 영화 (1,000만 미만)': '#A0A0A0'},
-    size='total_audi', 
+    size='total_audi', # 점 크기도 총 관객 수에 비례하도록 설정
     hover_name='movieNm',
-    title='개봉 후 관객 수가 1000만을 처음 넘긴 영화 장르',
+    title='개봉 후 관객 수가 1000만을 처음 넘긴 영화 장르', # 요청하신 그래프 제목
     labels={
-        'genre': '장르',
         'openDt_date': '개봉일',
+        'genre': '장르',
         '10m_label': '천만 관객 여부'
     }
 )
 
-# 툴팁 설정 (x와 y의 위치를 바꿈)
+# 툴팁 설정
 fig8.update_traces(
-    hovertemplate='<b>%{hovertext}</b><br>장르: %{x}<br>개봉일: %{y|%Y-%m-%d}<br>총 관객 수: %{marker.size:,.0f}명<extra></extra>'
+    hovertemplate='<b>%{hovertext}</b><br>개봉일: %{x}<br>장르: %{y}<br>총 관객 수: %{marker.size:,.0f}명<extra></extra>'
 )
 
 st.plotly_chart(fig8, use_container_width=True)
 
-st.info("**💡 이 그래프로 알 수 있는 것**\n\n(이곳에 그래프를 보고 발견한 사실을 한 문장으로 적어주세요. 예: 그래프의 가장 아래(과거)부터 위(최근)로 올라가며 붉은색 큰 점을 따라가 보면 처음으로 1000만을 달성한 영화와 장르를 찾을 수 있습니다.)")
+st.info("**💡 이 그래프로 알 수 있는 것**\n\n(이곳에 그래프를 보고 발견한 사실을 한 문장으로 적어주세요. 예: 그래프의 가장 왼쪽(과거)부터 붉은색 큰 점을 따라가 보면 처음으로 1000만을 달성한 영화와 장르를 찾을 수 있습니다.)")
 
 st.divider()
