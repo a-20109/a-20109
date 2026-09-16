@@ -20,7 +20,10 @@ def load_data():
     # 결측치 처리
     df['total_audi'] = df['total_audi'].fillna(0)
     df['first_week_audi'] = df['first_week_audi'].fillna(0)
-    df['nation'] = df['nation'].fillna('기타') # 국가 정보가 없는 경우 '기타'로 처리
+    df['nation'] = df['nation'].fillna('기타')
+    
+    # 개봉일을 타임라인 그래프에서 보기 좋게 날짜(Datetime) 형식으로 변환
+    df['openDt_date'] = pd.to_datetime(df['openDt'].astype(str), format='%Y%m%d', errors='coerce')
     
     return df
 
@@ -87,7 +90,6 @@ fig3.update_layout(yaxis_title="영화 편수 (편)")
 
 st.plotly_chart(fig3, use_container_width=True)
 
-# 자동으로 인사이트 문구 계산하기
 max_movie = df.loc[df['total_audi'].idxmax(), 'movieNm']
 max_audi = int(df['total_audi'].max())
 
@@ -126,7 +128,7 @@ fig4.update_traces(
 
 st.plotly_chart(fig4, use_container_width=True)
 
-st.info("**💡 이 그래프로 알 수 있는 것**\n\n(이곳에 그래프를 보고 발견한 사실을 한 문장으로 적어주세요. 예: 개봉일 스크린 수가 많을수록 총 관객 수가 늘어나는 경향이 있는지 확인할 수 있습니다.)")
+st.info("**💡 이 그래프로 알 수 있는 것**\n\n(이곳에 그래프를 보고 발견한 사실을 한 문장으로 적어주세요.)")
 
 st.divider()
 
@@ -152,7 +154,7 @@ fig5 = px.box(
 
 st.plotly_chart(fig5, use_container_width=True)
 
-st.info("**💡 이 그래프로 알 수 있는 것**\n\n(이곳에 그래프를 보고 발견한 사실을 한 문장으로 적어주세요. 예: 장르별 일반적인 관객 수의 범위와, 평균을 크게 웃도는 예외적인 흥행작(상자 밖의 점)을 확인할 수 있습니다.)")
+st.info("**💡 이 그래프로 알 수 있는 것**\n\n(이곳에 그래프를 보고 발견한 사실을 한 문장으로 적어주세요.)")
 
 st.divider()
 
@@ -184,7 +186,7 @@ fig6.update_traces(
 
 st.plotly_chart(fig6, use_container_width=True)
 
-st.info("**💡 이 그래프로 알 수 있는 것**\n\n(이곳에 그래프를 보고 발견한 사실을 한 문장으로 적어주세요. 예: 점의 위치뿐만 아니라 원의 크기를 통해 개봉 초반의 폭발력이 최종 흥행에 얼마나 기여했는지 유추해 볼 수 있습니다.)")
+st.info("**💡 이 그래프로 알 수 있는 것**\n\n(이곳에 그래프를 보고 발견한 사실을 한 문장으로 적어주세요.)")
 
 st.divider()
 
@@ -193,10 +195,9 @@ st.divider()
 # ==========================================
 st.subheader("7. 제작 국가 및 장르 분포 (선버스트 그래프)")
 
-# 값이 지정되지 않으면 기본적으로 각 행(영화 1편)을 1로 세어 칸 크기를 결정합니다.
 fig7 = px.sunburst(
     df,
-    path=['nation', 'genre'], # 안쪽 원(국가)에서 바깥쪽 원(장르)으로 뻗어나감
+    path=['nation', 'genre'], 
 )
 
 fig7.update_traces(
@@ -205,6 +206,48 @@ fig7.update_traces(
 
 st.plotly_chart(fig7, use_container_width=True)
 
-st.info("**💡 이 그래프로 알 수 있는 것**\n\n(이곳에 그래프를 보고 발견한 사실을 한 문장으로 적어주세요. 예: 한국 영화는 어떤 장르가 주를 이루고, 미국 영화는 어떤 장르가 많은지 한눈에 비교할 수 있습니다.)")
+st.info("**💡 이 그래프로 알 수 있는 것**\n\n(이곳에 그래프를 보고 발견한 사실을 한 문장으로 적어주세요.)")
+
+st.divider()
+
+# ==========================================
+# 11. 여덟 번째 그래프: 개봉 후 관객 수가 1000만을 처음 넘긴 영화 (타임라인 산점도)
+# ==========================================
+st.subheader("8. 개봉 후 관객 수가 1000만을 처음 넘긴 영화")
+
+# 1000만 관객 돌파 여부를 판단하는 컬럼 생성
+df['1000만_돌파'] = df['total_audi'] >= 10000000
+
+# 개봉일(X축)과 장르(Y축)에 따른 타임라인 산점도 생성
+fig8 = px.scatter(
+    df,
+    x='openDt_date',
+    y='genre',
+    color='1000만_돌파',     # 1000만 돌파 여부에 따라 색상 다르게
+    size='total_audi',       # 관객 수가 많을수록 점 크기 확대
+    hover_name='movieNm',
+    hover_data={'openDt_date': False, 'genre': False, '1000만_돌파': False, 'total_audi': True},
+    title="개봉 후 관객 수가 1000만을 처음 넘긴 영화",
+    labels={
+        'openDt_date': '개봉일',
+        'genre': '장르',
+        'total_audi': '총 관객 수 (명)',
+        '1000만_돌파': '1000만 관객'
+    },
+    # 1000만을 넘긴 영화는 눈에 띄는 빨간색, 나머지는 연한 회색으로 지정
+    color_discrete_map={True: 'red', False: 'lightgray'} 
+)
+
+# 툴팁(Hover) 서식 지정 (관객 수 천 단위 콤마)
+fig8.update_traces(
+    hovertemplate='<b>%{hovertext}</b><br>개봉일: %{x}<br>총 관객 수: %{customdata[0]:,.0f}명<extra></extra>'
+)
+
+# X축 표시를 좀 더 깔끔하게 다듬기
+fig8.update_layout(xaxis_title="개봉일 (시간순)")
+
+st.plotly_chart(fig8, use_container_width=True)
+
+st.info("**💡 이 그래프로 알 수 있는 것**\n\n(이곳에 그래프를 보고 발견한 사실을 한 문장으로 적어주세요. 예: 타임라인을 따라가며 붉은색 점(1000만 관객)이 가장 먼저 나타난 시점과 영화의 장르를 쉽게 찾을 수 있습니다.)")
 
 st.divider()
