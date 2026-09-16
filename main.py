@@ -1,3 +1,4 @@
+# main.py
 import streamlit as st
 import pandas as pd
 import plotly.express as px
@@ -17,8 +18,9 @@ def load_data():
     # 장르 전처리: '|' 기호로 구분된 경우 첫 번째 장르만 추출
     df['genre'] = df['genre'].astype(str).str.split('|').str[0]
     
-    # 결측치 처리
+    # 결측치 처리 (트리맵, 버블 차트 등의 오류 방지)
     df['total_audi'] = df['total_audi'].fillna(0)
+    df['first_week_audi'] = df['first_week_audi'].fillna(0)
     
     return df
 
@@ -133,17 +135,15 @@ st.divider()
 # ==========================================
 st.subheader("5. 주요 장르별 총 관객 수 분포 (상자 그림)")
 
-# 영화가 10편 이상인 장르만 필터링
 genre_counts_box = df['genre'].value_counts()
 genres_over_10 = genre_counts_box[genre_counts_box >= 10].index
 df_box = df[df['genre'].isin(genres_over_10)]
 
-# 상자 그림(박스플롯) 생성
 fig5 = px.box(
     df_box,
     x='genre',
     y='total_audi',
-    hover_data=['movieNm'], # 점에 마우스를 올리면 영화명이 보이도록 설정
+    hover_data=['movieNm'], 
     labels={
         'genre': '장르',
         'total_audi': '총 관객 수 (명)'
@@ -155,3 +155,73 @@ st.plotly_chart(fig5, use_container_width=True)
 st.info("**💡 이 그래프로 알 수 있는 것**\n\n(이곳에 그래프를 보고 발견한 사실을 한 문장으로 적어주세요. 예: 장르별 일반적인 관객 수의 범위와, 평균을 크게 웃도는 예외적인 흥행작(상자 밖의 점)을 확인할 수 있습니다.)")
 
 st.divider()
+
+# ==========================================
+# 9. 여섯 번째 그래프: 스크린 수, 총 관객 수, 첫 주 관객 수 (버블 차트)
+# ==========================================
+st.subheader("6. 개봉일 스크린 수, 총 관객 수, 첫 주 관객 수 (버블 차트)")
+
+fig6 = px.scatter(
+    df,
+    x='first_scrn',
+    y='total_audi',
+    size='first_week_audi',  # 버블의 크기를 첫 주 관객 수로 지정
+    color='genre',         
+    hover_name='movieNm',
+    hover_data={'first_week_audi': True, 'first_scrn': False, 'total_audi': False}, 
+    size_max=50,             # 가장 큰 버블의 최대 크기 설정
+    labels={
+        'first_scrn': '개봉일 스크린 수 (개)',
+        'total_audi': '총 관객 수 (명)',
+        'first_week_audi': '개봉 첫 주 관객 (명)',
+        'genre': '장르'
+    }
+)
+
+# 툴팁에 세 가지 정보를 모두 천 단위 콤마로 표시되도록 세팅
+fig6.update_traces(
+    hovertemplate='<b>%{hovertext}</b><br>스크린 수: %{x:,.0f}개<br>총 관객 수: %{y:,.0f}명<br>첫 주 관객 수: %{customdata[0]:,.0f}명<extra></extra>'
+)
+
+st.plotly_chart(fig6, use_container_width=True)
+
+st.info("**💡 이 그래프로 알 수 있는 것**\n\n(이곳에 그래프를 보고 발견한 사실을 한 문장으로 적어주세요. 예: 점의 위치뿐만 아니라 원의 크기를 통해 개봉 초반의 폭발력이 최종 흥행에 얼마나 기여했는지 유추해 볼 수 있습니다.)")
+
+st.divider()
+```eof
+
+여섯 번째 그래프까지 모두 완성되었습니다! 코드를 덮어쓰고 저장하신 후 새로고침하시면, 산점도의 점 크기가 개봉 첫 주 관객 수에 따라 커지는 버블 차트를 확인하실 수 있습니다.좋습니다! 네 번째 산점도를 바탕으로, 점의 크기를 첫 주 관객 수(`first_week_audi`)로 설정한 여섯 번째 **버블 그래프**를 그리는 파이썬(Python) 코드입니다. 
+
+제가 직접 화면에 그래프를 띄워드릴 수는 없지만, 기존에 작업하시던 환경(Jupyter Notebook 등)에 아래 코드를 추가해서 실행하시면 멋진 버블 그래프가 완성될 거예요.
+
+## 여섯 번째 그래프: 첫 주 관객 수 버블 그래프
+
+기존 산점도 코드에서 `s` (사이즈) 속성이나 `size` 파라미터를 추가하면 간단하게 버블 그래프로 변환할 수 있습니다. 관객 수 데이터가 너무 크면 버블이 화면을 다 가릴 수 있으니, 적절한 비율로 축소해 주는 것이 포인트입니다.
+
+### Seaborn을 사용하는 경우
+```python
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+plt.figure(figsize=(10, 6))
+
+# x와 y에는 네 번째 그래프에서 사용하신 컬럼명을 그대로 넣어주세요.
+# sizes=(최소 크기, 최대 크기)를 조절하여 버블이 겹치지 않게 만듭니다.
+sns.scatterplot(
+    data=df, 
+    x='x_column',       # 기존 x축 데이터 컬럼명
+    y='y_column',       # 기존 y축 데이터 컬럼명
+    size='first_week_audi', 
+    sizes=(20, 500),    # 버블 크기 범위 지정
+    alpha=0.6,          # 겹칠 때 잘 보이도록 투명도 조절
+    color='royalblue'
+)
+
+plt.title('여섯 번째 그래프: 첫 주 관객 수(first_week_audi)에 따른 버블 그래프', fontsize=14)
+plt.xlabel('X축 이름')
+plt.ylabel('Y축 이름')
+
+# 범례 위치 조정 (버블 크기 범례가 밖으로 나오도록)
+plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+plt.tight_layout()
+plt.show()
