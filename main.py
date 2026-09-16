@@ -17,9 +17,10 @@ def load_data():
     # 장르 전처리: '|' 기호로 구분된 경우 첫 번째 장르만 추출
     df['genre'] = df['genre'].astype(str).str.split('|').str[0]
     
-    # 결측치 처리 (트리맵, 버블 차트 등의 오류 방지)
+    # 결측치 처리
     df['total_audi'] = df['total_audi'].fillna(0)
     df['first_week_audi'] = df['first_week_audi'].fillna(0)
+    df['nation'] = df['nation'].fillna('기타') # 국가 정보가 없는 경우 '기타'로 처리
     
     return df
 
@@ -164,11 +165,11 @@ fig6 = px.scatter(
     df,
     x='first_scrn',
     y='total_audi',
-    size='first_week_audi',  # 버블의 크기를 첫 주 관객 수로 지정
+    size='first_week_audi', 
     color='genre',         
     hover_name='movieNm',
     hover_data={'first_week_audi': True, 'first_scrn': False, 'total_audi': False}, 
-    size_max=50,             # 가장 큰 버블의 최대 크기 설정
+    size_max=50,             
     labels={
         'first_scrn': '개봉일 스크린 수 (개)',
         'total_audi': '총 관객 수 (명)',
@@ -177,7 +178,6 @@ fig6 = px.scatter(
     }
 )
 
-# 툴팁에 세 가지 정보를 모두 천 단위 콤마로 표시되도록 세팅
 fig6.update_traces(
     hovertemplate='<b>%{hovertext}</b><br>스크린 수: %{x:,.0f}개<br>총 관객 수: %{y:,.0f}명<br>첫 주 관객 수: %{customdata[0]:,.0f}명<extra></extra>'
 )
@@ -185,5 +185,26 @@ fig6.update_traces(
 st.plotly_chart(fig6, use_container_width=True)
 
 st.info("**💡 이 그래프로 알 수 있는 것**\n\n(이곳에 그래프를 보고 발견한 사실을 한 문장으로 적어주세요. 예: 점의 위치뿐만 아니라 원의 크기를 통해 개봉 초반의 폭발력이 최종 흥행에 얼마나 기여했는지 유추해 볼 수 있습니다.)")
+
+st.divider()
+
+# ==========================================
+# 10. 일곱 번째 그래프: 제작 국가 -> 장르 (선버스트 차트)
+# ==========================================
+st.subheader("7. 제작 국가 및 장르 분포 (선버스트 그래프)")
+
+# 값이 지정되지 않으면 기본적으로 각 행(영화 1편)을 1로 세어 칸 크기를 결정합니다.
+fig7 = px.sunburst(
+    df,
+    path=['nation', 'genre'], # 안쪽 원(국가)에서 바깥쪽 원(장르)으로 뻗어나감
+)
+
+fig7.update_traces(
+    hovertemplate='<b>%{label}</b><br>영화 편수: %{value}편<extra></extra>'
+)
+
+st.plotly_chart(fig7, use_container_width=True)
+
+st.info("**💡 이 그래프로 알 수 있는 것**\n\n(이곳에 그래프를 보고 발견한 사실을 한 문장으로 적어주세요. 예: 한국 영화는 어떤 장르가 주를 이루고, 미국 영화는 어떤 장르가 많은지 한눈에 비교할 수 있습니다.)")
 
 st.divider()
