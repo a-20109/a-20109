@@ -1,4 +1,3 @@
-# main.py
 import streamlit as st
 import pandas as pd
 import plotly.express as px
@@ -188,39 +187,3 @@ st.plotly_chart(fig6, use_container_width=True)
 st.info("**💡 이 그래프로 알 수 있는 것**\n\n(이곳에 그래프를 보고 발견한 사실을 한 문장으로 적어주세요. 예: 점의 위치뿐만 아니라 원의 크기를 통해 개봉 초반의 폭발력이 최종 흥행에 얼마나 기여했는지 유추해 볼 수 있습니다.)")
 
 st.divider()
-
-여섯 번째 그래프까지 모두 완성되었습니다! 코드를 덮어쓰고 저장하신 후 새로고침하시면, 산점도의 점 크기가 개봉 첫 주 관객 수에 따라 커지는 버블 차트를 확인하실 수 있습니다.좋습니다! 네 번째 산점도를 바탕으로, 점의 크기를 첫 주 관객 수(`first_week_audi`)로 설정한 여섯 번째 **버블 그래프**를 그리는 파이썬(Python) 코드입니다. 
-
-제가 직접 화면에 그래프를 띄워드릴 수는 없지만, 기존에 작업하시던 환경(Jupyter Notebook 등)에 아래 코드를 추가해서 실행하시면 멋진 버블 그래프가 완성될 거예요.
-
-## 여섯 번째 그래프: 첫 주 관객 수 버블 그래프
-
-기존 산점도 코드에서 `s` (사이즈) 속성이나 `size` 파라미터를 추가하면 간단하게 버블 그래프로 변환할 수 있습니다. 관객 수 데이터가 너무 크면 버블이 화면을 다 가릴 수 있으니, 적절한 비율로 축소해 주는 것이 포인트입니다.
-
-### Seaborn을 사용하는 경우
-```python
-import matplotlib.pyplot as plt
-import seaborn as sns
-
-plt.figure(figsize=(10, 6))
-
-# x와 y에는 네 번째 그래프에서 사용하신 컬럼명을 그대로 넣어주세요.
-# sizes=(최소 크기, 최대 크기)를 조절하여 버블이 겹치지 않게 만듭니다.
-sns.scatterplot(
-    data=df, 
-    x='x_column',       # 기존 x축 데이터 컬럼명
-    y='y_column',       # 기존 y축 데이터 컬럼명
-    size='first_week_audi', 
-    sizes=(20, 500),    # 버블 크기 범위 지정
-    alpha=0.6,          # 겹칠 때 잘 보이도록 투명도 조절
-    color='royalblue'
-)
-
-plt.title('여섯 번째 그래프: 첫 주 관객 수(first_week_audi)에 따른 버블 그래프', fontsize=14)
-plt.xlabel('X축 이름')
-plt.ylabel('Y축 이름')
-
-# 범례 위치 조정 (버블 크기 범례가 밖으로 나오도록)
-plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
-plt.tight_layout()
-plt.show()
