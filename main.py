@@ -87,7 +87,6 @@ fig3.update_layout(yaxis_title="영화 편수 (편)")
 
 st.plotly_chart(fig3, use_container_width=True)
 
-# 자동으로 인사이트 문구 계산하기
 max_movie = df.loc[df['total_audi'].idxmax(), 'movieNm']
 max_audi = int(df['total_audi'].max())
 
@@ -211,36 +210,39 @@ st.divider()
 # ==========================================
 # 11. 여덟 번째 그래프: 개봉 후 관객 수가 1000만을 처음 넘긴 영화
 # ==========================================
-st.subheader("8. 개봉 후 관객 수가 1000만을 처음 넘긴 영화")
+st.subheader("8. 개봉 후 관객 수가 1000만에 근접하거나 넘긴 영화 (타임라인)")
 
-# 1000만 관객 이상 영화 필터링
-df_10m = df[df['total_audi'] >= 10000000].copy()
+# 1000만 관객에 '근접한' 영화(900만 이상)까지 모두 포함
+df_10m = df[df['total_audi'] >= 9000000].copy()
 
 # 여덟 자리 숫자(예: 20190123)인 개봉일을 날짜 형식(datetime)으로 변환
 df_10m['openDt_date'] = pd.to_datetime(df_10m['openDt'].astype(str))
 
-# 타임라인 형태의 산점도 그리기
+# y축을 장르에서 총 관객 수로 변경
 fig8 = px.scatter(
     df_10m,
     x='openDt_date',
-    y='genre',
+    y='total_audi',       # 세로축을 총 관객 수로 수정
     color='movieNm',      # 영화마다 다른 색상 적용
     size='total_audi',    # 관객 수에 비례하여 점 크기 조절
     size_max=30,
     hover_name='movieNm', # 마우스 오버 시 영화명 표시
+    hover_data=['genre'], # 툴팁에 장르 표시를 위해 추가
     labels={
         'openDt_date': '개봉일',
+        'total_audi': '총 관객 수 (명)',
         'genre': '장르',
         'movieNm': '영화명'
     }
 )
 
+# 툴팁에 영화명, 개봉일, 총 관객 수, 장르가 모두 예쁘게 보이도록 설정
 fig8.update_traces(
-    hovertemplate='<b>%{hovertext}</b><br>개봉일: %{x}<br>장르: %{y}<extra></extra>'
+    hovertemplate='<b>%{hovertext}</b><br>개봉일: %{x}<br>총 관객 수: %{y:,.0f}명<br>장르: %{customdata[0]}<extra></extra>'
 )
 
 st.plotly_chart(fig8, use_container_width=True)
 
-st.info("**💡 이 그래프로 알 수 있는 것**\n\n(이곳에 그래프를 보고 발견한 사실을 한 문장으로 적어주세요. 예: 가장 왼쪽에 찍힌 점이 1000만 관객을 가장 먼저 돌파한 영화임을 알 수 있습니다.)")
+st.info("**💡 이 그래프로 알 수 있는 것**\n\n(이곳에 그래프를 보고 발견한 사실을 한 문장으로 적어주세요. 예: 우상단에 위치할수록 최근에 개봉했으며 관객 수가 가장 많은 영화임을 알 수 있습니다.)")
 
 st.divider()
